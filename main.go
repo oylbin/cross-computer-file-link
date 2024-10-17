@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -22,6 +23,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to determine home directory", http.StatusInternalServerError)
 		return
 	}
+	// current process username
+	username, err := user.Current()
+	if err != nil {
+		http.Error(w, "Unable to determine current user", http.StatusInternalServerError)
+		return
+	}
 
 	if runtime.GOOS == "windows" {
 		homeDir = strings.ReplaceAll(homeDir, "\\", "\\\\")
@@ -33,6 +40,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			<input type="text" id="path" placeholder="Enter local file path" style="width: 300px; height: 30px; font-size: 16px;" onfocus="this.select();" onkeypress="if(event.keyCode==13) convertAndCopy();" />
 			<button onclick="convertAndCopy()">Convert and Copy</button>
 			<p>Home: %s</p>
+			<p>Username: %s</p>
 			<p id="status"></p>
 			<script>
 				function convertAndCopy() {
@@ -41,7 +49,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 					var relativePath = localPath.replace(homeDir, '').replace(/\\/g, '/');
 					var url = "http://localhost:10114/redirect" + relativePath;
 					navigator.clipboard.writeText(url).then(function() {
-						document.getElementById('status').textContent = 'URL copied to clipboard: ' + url;
+						document.getElementById('status').innerHTML = '<a href="' + url + '" target="_blank">URL copied to clipboard: ' + url + '</a>';
 					}, function(err) {
 						document.getElementById('status').textContent = 'Could not copy text: ' + err;
 					});
@@ -49,7 +57,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, homeDir, homeDir)
+	`, homeDir, username.Username, homeDir)
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
@@ -59,13 +67,25 @@ func redirectHandler(w http.ResponseWriter, r *http.Request) {
 		relativePath = strings.ReplaceAll(relativePath, "/", "\\")
 	}
 	localPath := filepath.Join(homeDir, relativePath)
-	fmt.Println(localPath)
+	// current process username
+	username, err := user.Current()
+	if err != nil {
+		http.Error(w, "Unable to determine current user", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("username:", username.Username)
+	fmt.Println("localPath:", localPath)
 	openFile(localPath)
 	fmt.Fprintf(w, `
 		<html>
 		<body>
 			<p>Opening file: %s</p>
-			<p>This window cannot be automatically closed. You may close it manually.</p>
+			<p>This window may not be automatically closed. You may close it manually.</p>
+			<script>
+				setTimeout(function() {
+					window.close();
+				}, 5000);
+			</script>
 		</body>
 		</html>
 	`, localPath)
@@ -81,5 +101,9 @@ func openFile(path string) {
 	case "linux":
 		cmd = exec.Command("xdg-open", path)
 	}
-	cmd.Start()
+	// run and get the return code
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+	}
 }

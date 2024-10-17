@@ -2,7 +2,7 @@
 
 
 
-尝试Windows下变成 Daemon 服务
+## 尝试Windows下变成 Daemon 服务
 
 首先是用sc命令安装服务
 
@@ -31,8 +31,12 @@
 macOS和Linux下用 nohup 运行。
 
 
+使用 NSSM 后，发现用户名权限都是对的，但是后台进程http service收到请求后无法打开文件。
+而双击exe直接运行时，http service收到请求后可以正常打开文件。
+
+最终解决方案，放弃注册为service的方案。
+
+问了一下chatgpt，使 Go 编写的命令行程序在 Windows 上自启动且常驻运行，但不显示命令行窗口，可以使用 `-H=windowsgui` 编译选项。
 
 
-
-
-
+不再折腾 install/uninstall/start/stop/status 这些命令行操作了。
