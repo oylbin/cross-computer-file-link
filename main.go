@@ -30,8 +30,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `
 		<html>
 		<body>
-			<input type="text" id="path" placeholder="Enter local file path" />
+			<input type="text" id="path" placeholder="Enter local file path" style="width: 300px; height: 30px; font-size: 16px;" onfocus="this.select();" onkeypress="if(event.keyCode==13) convertAndCopy();" />
 			<button onclick="convertAndCopy()">Convert and Copy</button>
+			<p id="status"></p>
 			<script>
 				function convertAndCopy() {
 					var localPath = document.getElementById('path').value;
@@ -39,9 +40,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 					var relativePath = localPath.replace(homeDir, '').replace(/\\/g, '/');
 					var url = "http://localhost:10114/redirect" + relativePath;
 					navigator.clipboard.writeText(url).then(function() {
-						alert('URL copied to clipboard: ' + url);
+						document.getElementById('status').textContent = 'URL copied to clipboard: ' + url;
 					}, function(err) {
-						console.error('Could not copy text: ', err);
+						document.getElementById('status').textContent = 'Could not copy text: ' + err;
 					});
 				}
 			</script>
