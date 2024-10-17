@@ -32,6 +32,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		<body>
 			<input type="text" id="path" placeholder="Enter local file path" style="width: 300px; height: 30px; font-size: 16px;" onfocus="this.select();" onkeypress="if(event.keyCode==13) convertAndCopy();" />
 			<button onclick="convertAndCopy()">Convert and Copy</button>
+			<p>Home: %s</p>
 			<p id="status"></p>
 			<script>
 				function convertAndCopy() {
@@ -48,7 +49,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, homeDir)
+	`, homeDir, homeDir)
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
