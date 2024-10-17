@@ -57,21 +57,13 @@ func redirectHandler(w http.ResponseWriter, r *http.Request) {
 		relativePath = strings.ReplaceAll(relativePath, "/", "\\")
 	}
 	localPath := filepath.Join(homeDir, relativePath)
+	fmt.Println(localPath)
 	openFile(localPath)
 	fmt.Fprintf(w, `
 		<html>
 		<body>
 			<p>Opening file: %s</p>
 			<p>This window cannot be automatically closed. You may close it manually.</p>
-			<script>
-				setTimeout(function() {
-					if (window.opener) {
-						window.close();
-					} else {
-						alert("This window cannot be automatically closed. You may close it manually.");
-					}
-				}, 5000);
-			</script>
 		</body>
 		</html>
 	`, localPath)
@@ -81,7 +73,7 @@ func openFile(path string) {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", path)
+		cmd = exec.Command("cmd", "/c", "start", "", path)
 	case "darwin":
 		cmd = exec.Command("open", path)
 	case "linux":
