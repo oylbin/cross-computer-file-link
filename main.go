@@ -42,12 +42,26 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			<p>Home: %s</p>
 			<p>Username: %s</p>
 			<p id="status"></p>
-			<script>
+	`, homeDir, username.Username)
+	fmt.Fprint(w, `<script>
+			function customEncodeURI(uri) {
+					// return uri.replace(/[^A-Za-z0-9\-_.!~*'();/?:@&=+$,#]+/g, function(c) {
+					// 	return encodeURIComponent(c);
+					// });
+					return uri.replace(/[ #&%?]/g, function(c) {
+						return encodeURIComponent(c);
+					});
+			}
+	`)
+	fmt.Fprintf(w, `
 				function convertAndCopy() {
 					var localPath = document.getElementById('path').value;
 					var homeDir = "%s";
 					var relativePath = localPath.replace(homeDir, '').replace(/\\/g, '/');
-					var url = "http://localhost:10114/redirect" + relativePath;
+					// var encodedPath = encodeURIComponent(relativePath); 会把 / 也进行编码，不太好看
+					// var encodedPath = encodeURI(relativePath); 不会把 / 编码，但是仍然会把中文进行编码。
+					var encodedPath = customEncodeURI(relativePath);
+					var url = "http://localhost:10114/redirect" + encodedPath;
 					navigator.clipboard.writeText(url).then(function() {
 						document.getElementById('status').innerHTML = '<a href="' + url + '" target="_blank">URL copied to clipboard: ' + url + '</a>';
 					}, function(err) {
@@ -57,7 +71,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			</script>
 		</body>
 		</html>
-	`, homeDir, username.Username, homeDir)
+	`, homeDir)
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
